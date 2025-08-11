@@ -1,0 +1,89 @@
+name: Contracts CI (Local Chain Deploy + Test)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y curl
+
+      - name: Create dotenv file
+        env:
+          ENV_VARS: ${{ secrets.ENV_VARS }} # This should be a JSON object string in your repo secrets
+        run: |
+          if [[ $ENV_VARS ]]; then
+            echo "${ENV_VARS}" | jq -r 'keys[] as $k | "\($k)=\(.[$k])"' >> packages/contracts/.env
+          fi
+      - name: Load .env into GITHUB_ENV
+        run: |
+          set -a
+          source packages/contracts/.env
+          set +a
+          while read line; do
+            if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+              echo "$line" >> $GITHUB_ENV
+            fi
+          done < packages/contracts/.env
+
+      - name: Install Foundry (anvil)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly # or stable
+      #   - name: Verify Foundry installation
+      #     run: foundryup --version && forge --version && anvil --version
+
+      #   - name: Run foundryup to ensure latest toolchain
+      #     run: foundryup
+
+      - name: Install dependencies
+        run: pnpm install
+
+      #   - name: Start local Anvil node
+      #     working-directory: packages/contracts
+      #     run: |
+      #       nohup anvil --port 8545 --host 0.0.0.0 > anvil.log 2>&1 &
+      #       sleep 3
+      #       curl -X POST --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+      #         -H "Content-Type: application/json" localhost:8546
+
+      - name: Run world:up
+        run: pnpm world:up
+
+      #   - name: fork for tests
+      #     working-directory: packages/contracts
+      #     run: |
+      #       nohup pnpm fork:world-node:local > anvil.log 2>&1 &
+      #       sleep 3
+      #       curl -X POST --data '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}' \
+      #         -H "Content-Type: application/json" localhost:8546
+      - name: Copy .env.local to packages/contracts
+        working-directory: packages/contracts
+        run: cp .env.local .env
+        
+      - name: Deploy local contracts to local anvil world
+        working-directory: packages/contracts
+        run: pnpm deploy:local
+
+      - name: Run tests
+        working-directory: packages/contracts
+        run: pnpm test

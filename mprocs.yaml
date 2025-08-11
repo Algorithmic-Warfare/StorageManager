@@ -1,0 +1,14 @@
+procs:
+  contracts:
+    cwd: packages/contracts
+    shell: pnpm deploy:dev
+  anvil:
+    cwd: packages/contracts
+    shell: pnpm fork:world-node:local
+  tests:
+    cwd: packages/contracts
+    shell: pnpm test
+  shell:
+    shell: "${SHELL-bash}"
+    cwd: .
+    stop: SIGKILL

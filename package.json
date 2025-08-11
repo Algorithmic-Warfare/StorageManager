@@ -1,0 +1,40 @@
+{
+  "name": "storage-manager",
+  "private": true,
+  "scripts": {
+    "build": "pnpm recursive run build",
+    "dev:client": "pnpm --filter 'client' run dev",
+    "dev:contracts": "pnpm --filter 'contracts' dev",
+    "foundry:up": "curl -L https://foundry.paradigm.xyz | bash && bash $HOME/.foundry/bin/foundryup",
+    "prepare": "(forge --version || pnpm foundry:up)",
+    "test": "pnpm recursive run test",
+    "dev:experimental": "process-compose",
+    "dev": "mprocs",
+    "world:up": "cd packages/eveworld && docker compose up -d && docker compose logs -f world-deployer",
+    "world:down": "cd packages/eveworld && docker compose down",
+    "test:world-node": "curl http://127.0.0.1:8546 -X POST -H \"Content-Type: application/json\" --data '{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1}'",
+    "world:logs": "cd packages/eveworld && docker compose logs -f world-deployer",
+    "world:restart": "pnpm world:down && pnpm world:up",
+    "clean": "rimraf packages/*/node_modules && rimraf packages/*/dist && rimraf packages/*/build && rimraf packages/*/coverage && rimraf node_modules"
+  },
+  "dependencies": {
+    "@eveworld/utils": "0.0.10-patch-v2",
+    "@latticexyz/dev-tools": "^2.2.21"
+  },
+  "devDependencies": {
+    "@latticexyz/cli": "2.2.9",
+    "@latticexyz/explorer": "2.2.9",
+    "@types/debug": "4.1.7",
+    "@types/prettier": "2.7.2",
+    "@typescript-eslint/eslint-plugin": "5.46.1",
+    "@typescript-eslint/parser": "5.46.1",
+    "eslint": "9.28.0",
+    "mprocs": "^0.7.1",
+    "rimraf": "^6.0.1",
+    "typescript": "5.1.6"
+  },
+  "engines": {
+    "node": "18.x",
+    "pnpm": ">=9.15.0"
+  }
+}

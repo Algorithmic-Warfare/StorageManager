@@ -1,0 +1,60 @@
+{
+  "name": "@awar-dev/storage-manager",
+  "author": {
+    "name": "blurpesec",
+    "email": "hahn.michael.f@gmail.com"
+  },
+  "version": "0.0.6",
+  "private": false,
+  "license": "MIT",
+  "scripts": {
+    "build": "mud build",
+    "clean": "forge clean && rimraf src/codegen",
+    "fork:world-node:local": "anvil --base-fee 0 --block-time 2 --fork-url http://127.0.0.1:8546",
+    "test:world-node:local": "curl http://127.0.0.1:8545 -X POST -H \"Content-Type: application/json\" --data '{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1}'",
+    "deploy:local": ". ./.env.local && pnpm run build && mud deploy --profile=local --worldAddress $WORLD_ADDRESS --alwaysRunPostDeploy",
+    "deploy:pyrope": ". ./.env.pyrope && pnpm run build && mud deploy --profile=pyrope --alwaysRunPostDeploy --worldAddress $WORLD_ADDRESS",
+    "deploy:dev": ". ./.env.local && pnpm mud dev-contracts --rpc $RPC_URL --worldAddress $WORLD_ADDRESS --alwaysRunPostDeploy",
+    "script:tst": ". ./.env.local && pnpm forge script ./script/GetBalance.s.sol:GetBalance --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID --sig \"run()\"",
+    "lint": "pnpm run prettier && pnpm run solhint",
+    "prettier": "prettier --write 'src/**/*.sol'",
+    "solhint": "solhint --config ./.solhint.json 'src/**/*.sol' --fix",
+    "test": ". ./.env.local && forge test --fork-url $RPC_URL -vvv",
+    "test:dev": ". ./.env.local && forge test --watch --fork-url $RPC_URL -vvvv",
+    "test:light": ". ./.env.local && forge test --fork-url $RPC_URL -vvv",
+    "coverage": ". ./.env.local && forge coverage --ir-minimum --fork-url $RPC_URL -vvvv",
+    "configure-ssu": ". ./.env && pnpm forge script ./script/ConfigureSSU.s.sol:ConfigureSSU --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID --sig \"run()\" $WORLD_ADDRESS",
+    "create-nested-bucket": ". ./.env && pnpm forge script ./script/CreateNestedBucket.s.sol:CreateNestedBucket --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID --sig \"run(string)\" $WORLD_ADDRESS"
+    },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src/codegen/",
+    "README.md"
+  ],
+  "dependencies": {
+    "@eveworld/common-constants": "latest",
+    "@eveworld/smart-object-framework-v2": "latest",
+    "@eveworld/world-v2": "latest",
+    "@latticexyz/cli": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@latticexyz/schema-type": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@latticexyz/store": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@latticexyz/world": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@latticexyz/world-modules": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@openzeppelin/contracts": "^5.3.0",
+    "i": "^0.3.7",
+    "npm": "^10.8.0"
+  },
+  "devDependencies": {
+    "@latticexyz/gas-report": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "@types/node": "^18.15.11",
+    "ds-test": "https://github.com/dapphub/ds-test.git#e282159d5170298eb2455a6c05280ab5a73a4ef0",
+    "forge-std": "https://github.com/foundry-rs/forge-std.git#74cfb77e308dd188d2f58864aaf44963ae6b88b1",
+    "prettier": "3.2.5",
+    "prettier-plugin-solidity": "1.1.3",
+    "solhint": "^3.3.7",
+    "solhint-config-mud": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7",
+    "solhint-plugin-mud": "2.2.15-main-ba5191c3d6f74b3c4982afd465cf449d23d70bb7"
+  }
+}
