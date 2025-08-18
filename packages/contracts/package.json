@@ -4,7 +4,7 @@
     "name": "blurpesec",
     "email": "hahn.michael.f@gmail.com"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
   "license": "MIT",
   "scripts": {
@@ -31,6 +31,8 @@
   },
   "files": [
     "src/codegen/",
+    "src/systems/",
+    "src/tables/",
     "README.md"
   ],
   "dependencies": {
