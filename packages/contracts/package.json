@@ -33,7 +33,8 @@
     "src/codegen/",
     "src/systems/",
     "src/tables/",
-    "README.md"
+    "README.md",
+    "INTERACTION_PATTERNS.md"
   ],
   "dependencies": {
     "@eveworld/common-constants": "latest",
