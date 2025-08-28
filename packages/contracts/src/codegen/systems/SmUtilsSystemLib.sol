@@ -137,6 +137,10 @@ library SmUtilsSystemLib {
     return CallWrapper(self.toResourceId(), address(0)).getBucketMetadataChainByName(smartObjectId, bucketName);
   }
 
+  function getItemTypeIds(SmUtilsSystemType self, uint256[] calldata itemIds) internal view returns (uint256[] memory) {
+    return CallWrapper(self.toResourceId(), address(0)).getItemTypeIds(itemIds);
+  }
+
   function deriveBucketId(
     CallWrapper memory self,
     uint256 smartObjectId,
@@ -394,6 +398,24 @@ library SmUtilsSystemLib {
     return abi.decode(result, (BucketMetadataWithId[]));
   }
 
+  function getItemTypeIds(
+    CallWrapper memory self,
+    uint256[] calldata itemIds
+  ) internal view returns (uint256[] memory) {
+    // if the contract calling this function is a root system, it should use `callAsRoot`
+    if (address(_world()) == address(this)) revert SmUtilsSystemLib_CallingFromRootSystem();
+
+    bytes memory systemCall = abi.encodeCall(_getItemTypeIds_uint256Array.getItemTypeIds, (itemIds));
+    bytes memory worldCall = self.from == address(0)
+      ? abi.encodeCall(IWorldCall.call, (self.systemId, systemCall))
+      : abi.encodeCall(IWorldCall.callFrom, (self.from, self.systemId, systemCall));
+    (bool success, bytes memory returnData) = address(_world()).staticcall(worldCall);
+    if (!success) revertWithBytes(returnData);
+
+    bytes memory result = abi.decode(returnData, (bytes));
+    return abi.decode(result, (uint256[]));
+  }
+
   function deriveBucketId(
     RootCallWrapper memory self,
     uint256 smartObjectId,
@@ -559,6 +581,16 @@ library SmUtilsSystemLib {
 
     bytes memory result = SystemCall.staticcallOrRevert(self.from, self.systemId, systemCall);
     return abi.decode(result, (BucketMetadataWithId[]));
+  }
+
+  function getItemTypeIds(
+    RootCallWrapper memory self,
+    uint256[] calldata itemIds
+  ) internal view returns (uint256[] memory) {
+    bytes memory systemCall = abi.encodeCall(_getItemTypeIds_uint256Array.getItemTypeIds, (itemIds));
+
+    bytes memory result = SystemCall.staticcallOrRevert(self.from, self.systemId, systemCall);
+    return abi.decode(result, (uint256[]));
   }
 
   function callFrom(SmUtilsSystemType self, address from) internal pure returns (CallWrapper memory) {
@@ -645,6 +677,10 @@ interface _getBucketMetadataChain_uint256_bytes32 {
 
 interface _getBucketMetadataChainByName_uint256_string {
   function getBucketMetadataChainByName(uint256 smartObjectId, string memory bucketName) external;
+}
+
+interface _getItemTypeIds_uint256Array {
+  function getItemTypeIds(uint256[] calldata itemIds) external;
 }
 
 using SmUtilsSystemLib for SmUtilsSystemType global;

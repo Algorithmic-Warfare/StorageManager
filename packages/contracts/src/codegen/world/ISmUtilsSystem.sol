@@ -68,4 +68,6 @@ interface ISmUtilsSystem {
     uint256 smartObjectId,
     string memory bucketName
   ) external view returns (BucketMetadataWithId[] memory);
+
+  function sm_v0_2_0__getItemTypeIds(uint256[] calldata itemIds) external view returns (uint256[] memory);
 }

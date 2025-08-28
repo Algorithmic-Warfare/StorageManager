@@ -12,7 +12,7 @@ contract ConfigureSSU is Script {
     address worldAddress = vm.envAddress("WORLD_ADDRESS");
     bool configureAsImmutable = vm.envBool("CONFIGURE_AS_IMMUTABLE");
     IWorld world = IWorld(worldAddress);
-    address storeProxySystemAddress = world.sm_v0_2_0sm__getStoreProxyAddress();
+    address storeProxySystemAddress = world.sm_v0_2_0__getStoreProxyAddress();
     if (storeProxySystemAddress == address(0)) {
       revert("StoreProxySystem not registered to the World");
     }

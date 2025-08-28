@@ -4,6 +4,7 @@ import { InventoryItemParams } from "@eveworld/world-v2/src/namespaces/evefronti
 import { InventoryItem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/InventoryItem.sol";
 import { OwnershipByObject } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/OwnershipByObject.sol";
 import { System } from "@latticexyz/world/src/System.sol";
+import { IWorldWithContext } from "@eveworld/smart-object-framework-v2/src/IWorldWithContext.sol";
 
 import { storeAuthSystem } from "../../codegen/systems/StoreAuthSystemLib.sol";
 import { storeLogicSystem } from "../../codegen/systems/StoreLogicSystemLib.sol";
@@ -46,6 +47,7 @@ contract StorageSystem is System {
     if (!storeAuthSystem.canDeposit(smartObjectId, bucketId, _msgSender())) {
       revert UnauthorizedDeposit();
     }
+    (, , address transferrer, ) = IWorldWithContext(_world()).getWorldCallContext(1);
     // for each item in transferItems, check if the item exists in the BucketedInventoryItem table for the bucketId
     // if it does, transfer the item from the ephemeral inventory to the primary inventory
     // if it doesn't, create a new entry in the BucketedInventoryItem table for the item and transfer
@@ -54,7 +56,7 @@ contract StorageSystem is System {
       InventoryItemParams memory item = transferItems[i];
       // if is depositing from primary inventory, check if the item has a net quantity in the primary inventory (i.e - not already allocated to a bucket)
       if (useOwnerInventory) {
-        if (_msgSender() != OwnershipByObject.getAccount(smartObjectId)) {
+        if (transferrer != OwnershipByObject.getAccount(smartObjectId)) {
           revert UnauthorizedDepositFromOwnerInventory();
         }
         uint256 primaryInventoryQuantity = InventoryItem.getQuantity(smartObjectId, item.smartObjectId);
@@ -70,7 +72,7 @@ contract StorageSystem is System {
     }
     // transfer the items from the ephemeral inventory to the primary inventory
     if (!useOwnerInventory) {
-      storeProxySystem.proxyTransferFromEphemeral(smartObjectId, _msgSender(), transferItems);
+      storeProxySystem.proxyTransferFromEphemeral(smartObjectId, transferrer, transferItems);
     }
   }
 
@@ -83,6 +85,7 @@ contract StorageSystem is System {
     if (!storeAuthSystem.canWithdraw(smartObjectId, bucketId, _msgSender())) {
       revert UnauthorizedWithdraw();
     }
+    (, , address transferrer, ) = IWorldWithContext(_world()).getWorldCallContext(1);
 
     for (uint i = 0; i < transferItems.length; ) {
       InventoryItemParams memory item = transferItems[i];
@@ -97,7 +100,7 @@ contract StorageSystem is System {
       i = unsafe_increment(i);
     }
     if (!useOwnerInventory) {
-      storeProxySystem.proxyTransferToEphemeral(smartObjectId, _msgSender(), transferItems);
+      storeProxySystem.proxyTransferToEphemeral(smartObjectId, transferrer, transferItems);
     }
   }
 

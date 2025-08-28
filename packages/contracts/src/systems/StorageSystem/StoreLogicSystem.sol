@@ -51,9 +51,9 @@ contract StoreLogicSystem is System {
     InventoryItemParams memory item
   ) external {
     if (!InventoryBalances.getExists(smartObjectId, item.smartObjectId)) {
-        if (isWithdrawal) {
-          revert ItemAggregateNotFound();
-        }
+      if (isWithdrawal) {
+        revert ItemAggregateNotFound();
+      }
       // create a new entry in the InventoryBalances table for the item
       InventoryBalances.set(smartObjectId, item.smartObjectId, true, uint64(item.quantity));
     } else {

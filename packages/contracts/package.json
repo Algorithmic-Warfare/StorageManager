@@ -4,7 +4,7 @@
     "name": "blurpesec",
     "email": "hahn.michael.f@gmail.com"
   },
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": false,
   "license": "MIT",
   "scripts": {
@@ -26,7 +26,7 @@
     "configure-ssu": ". ./.env && pnpm forge script ./script/ConfigureSSU.s.sol:ConfigureSSU --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID --sig \"run()\" $WORLD_ADDRESS",
     "create-nested-bucket": ". ./.env && pnpm forge script ./script/CreateNestedBucket.s.sol:CreateNestedBucket --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID --sig \"run(string)\" $WORLD_ADDRESS",
     "install:storage-manager": ". ./.env.local && pnpm forge script ./scripts/InstallStorageManager.s.sol:InstallStorageManager --broadcast --rpc-url $RPC_URL --chain-id $CHAIN_ID -vvvv"
-    },
+  },
   "publishConfig": {
     "access": "public"
   },
