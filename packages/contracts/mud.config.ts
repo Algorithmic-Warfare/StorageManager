@@ -39,18 +39,6 @@ export default defineWorld({
     ResourceId: { filePath: "@latticexyz/store/src/ResourceId.sol", type: "bytes32" },
   },
   tables: {
-    // Tasklist: {
-    //   schema: {
-    //     id: "uint256",
-    //     creator: "address",
-    //     assignee: "address",
-    //     deadline: "uint256",
-    //     timestamp: "uint256",
-    //     status: "TaskStatus",
-    //     description: "string",
-    //   },
-    //   key: ["id"],
-    // },
     BucketedInventoryItem: {
       schema: {
         bucketId: "bytes32",
@@ -115,8 +103,4 @@ export default defineWorld({
       key: ["smartObjectId", "bucketId"],
     },
   },
-
-  //   enums: {
-  //     TaskStatus: ["OPEN", "CLOSED"],
-  //   },
 });

@@ -6,6 +6,7 @@ import { InventoryItemParams } from "@eveworld/world-v2/src/namespaces/evefronti
 import { InventoryItem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/InventoryItem.sol";
 import { EphemeralInventory } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/EphemeralInventory.sol";
 import { EphemeralInvItem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/EphemeralInvItem.sol";
+import { EntityRecord } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/tables/EntityRecord.sol";
 
 import { InventoryBalances } from "../codegen/tables/InventoryBalances.sol";
 import { storeAuthSystem } from "../codegen/systems/StoreAuthSystemLib.sol";
@@ -19,6 +20,12 @@ import { SharedUtils, BucketMetadataWithId } from "./StorageSystem/utils.sol";
 
 contract SmUtilsSystem is System {
   using Bytes32StringPacker for string;
+
+  function incrementUnsafe(uint256 i) private pure returns (uint256) {
+    unchecked {
+      return i + 1;
+    }
+  }
 
   function deriveBucketId(uint256 smartObjectId, string memory bucketName) public pure returns (bytes32) {
     return bytes32(keccak256(abi.encode(smartObjectId, bucketName.pack())));
@@ -219,5 +226,17 @@ contract SmUtilsSystem is System {
     // compose bucketId by name
     bytes32 bucketId = SharedUtils.composeBucketId(smartObjectId, bucketName);
     return getBucketMetadataChain(smartObjectId, bucketId);
+  }
+
+  /**
+   * @dev - Get the typeIds of all specified itemIds
+   */
+  function getItemTypeIds(uint256[] calldata itemIds) public view returns (uint256[] memory) {
+    uint256[] memory typeIds = new uint256[](itemIds.length);
+    for (uint i = 0; i < itemIds.length; ) {
+      typeIds[i] = EntityRecord.getTypeId(itemIds[i]);
+      i = incrementUnsafe(i);
+    }
+    return typeIds;
   }
 }
