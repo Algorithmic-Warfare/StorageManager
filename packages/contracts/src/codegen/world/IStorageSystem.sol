@@ -20,10 +20,16 @@ interface IStorageSystem {
     InventoryItemParams[] memory transferItems
   ) external;
 
+  function sm_v0_2_0__transferToPlayer(
+    uint256 smartObjectId,
+    bytes32 bucketId,
+    address recipient,
+    InventoryItemParams[] memory transferItems
+  ) external;
+
   function sm_v0_2_0__withdraw(
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
     InventoryItemParams[] memory transferItems
   ) external;
 

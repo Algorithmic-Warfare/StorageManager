@@ -52,15 +52,24 @@ library StorageSystemLib {
       CallWrapper(self.toResourceId(), address(0)).deposit(smartObjectId, bucketId, useOwnerInventory, transferItems);
   }
 
+  function transferToPlayer(
+    StorageSystemType self,
+    uint256 smartObjectId,
+    bytes32 bucketId,
+    address recipient,
+    InventoryItemParams[] memory transferItems
+  ) internal {
+    return
+      CallWrapper(self.toResourceId(), address(0)).transferToPlayer(smartObjectId, bucketId, recipient, transferItems);
+  }
+
   function withdraw(
     StorageSystemType self,
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
     InventoryItemParams[] memory transferItems
   ) internal {
-    return
-      CallWrapper(self.toResourceId(), address(0)).withdraw(smartObjectId, bucketId, useOwnerInventory, transferItems);
+    return CallWrapper(self.toResourceId(), address(0)).withdraw(smartObjectId, bucketId, transferItems);
   }
 
   function internalTransfer(
@@ -113,19 +122,37 @@ library StorageSystemLib {
       : _world().callFrom(self.from, self.systemId, systemCall);
   }
 
-  function withdraw(
+  function transferToPlayer(
     CallWrapper memory self,
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
+    address recipient,
     InventoryItemParams[] memory transferItems
   ) internal {
     // if the contract calling this function is a root system, it should use `callAsRoot`
     if (address(_world()) == address(this)) revert StorageSystemLib_CallingFromRootSystem();
 
     bytes memory systemCall = abi.encodeCall(
-      _withdraw_uint256_bytes32_bool_InventoryItemParamsArray.withdraw,
-      (smartObjectId, bucketId, useOwnerInventory, transferItems)
+      _transferToPlayer_uint256_bytes32_address_InventoryItemParamsArray.transferToPlayer,
+      (smartObjectId, bucketId, recipient, transferItems)
+    );
+    self.from == address(0)
+      ? _world().call(self.systemId, systemCall)
+      : _world().callFrom(self.from, self.systemId, systemCall);
+  }
+
+  function withdraw(
+    CallWrapper memory self,
+    uint256 smartObjectId,
+    bytes32 bucketId,
+    InventoryItemParams[] memory transferItems
+  ) internal {
+    // if the contract calling this function is a root system, it should use `callAsRoot`
+    if (address(_world()) == address(this)) revert StorageSystemLib_CallingFromRootSystem();
+
+    bytes memory systemCall = abi.encodeCall(
+      _withdraw_uint256_bytes32_InventoryItemParamsArray.withdraw,
+      (smartObjectId, bucketId, transferItems)
     );
     self.from == address(0)
       ? _world().call(self.systemId, systemCall)
@@ -172,16 +199,29 @@ library StorageSystemLib {
     SystemCall.callWithHooksOrRevert(self.from, self.systemId, systemCall, msg.value);
   }
 
+  function transferToPlayer(
+    RootCallWrapper memory self,
+    uint256 smartObjectId,
+    bytes32 bucketId,
+    address recipient,
+    InventoryItemParams[] memory transferItems
+  ) internal {
+    bytes memory systemCall = abi.encodeCall(
+      _transferToPlayer_uint256_bytes32_address_InventoryItemParamsArray.transferToPlayer,
+      (smartObjectId, bucketId, recipient, transferItems)
+    );
+    SystemCall.callWithHooksOrRevert(self.from, self.systemId, systemCall, msg.value);
+  }
+
   function withdraw(
     RootCallWrapper memory self,
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
     InventoryItemParams[] memory transferItems
   ) internal {
     bytes memory systemCall = abi.encodeCall(
-      _withdraw_uint256_bytes32_bool_InventoryItemParamsArray.withdraw,
-      (smartObjectId, bucketId, useOwnerInventory, transferItems)
+      _withdraw_uint256_bytes32_InventoryItemParamsArray.withdraw,
+      (smartObjectId, bucketId, transferItems)
     );
     SystemCall.callWithHooksOrRevert(self.from, self.systemId, systemCall, msg.value);
   }
@@ -251,13 +291,17 @@ interface _deposit_uint256_bytes32_bool_InventoryItemParamsArray {
   ) external;
 }
 
-interface _withdraw_uint256_bytes32_bool_InventoryItemParamsArray {
-  function withdraw(
+interface _transferToPlayer_uint256_bytes32_address_InventoryItemParamsArray {
+  function transferToPlayer(
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
+    address recipient,
     InventoryItemParams[] memory transferItems
   ) external;
+}
+
+interface _withdraw_uint256_bytes32_InventoryItemParamsArray {
+  function withdraw(uint256 smartObjectId, bytes32 bucketId, InventoryItemParams[] memory transferItems) external;
 }
 
 interface _internalTransfer_uint256_bytes32_bytes32_InventoryItemParamsArray {

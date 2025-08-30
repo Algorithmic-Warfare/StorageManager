@@ -185,7 +185,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     // Test unauthorized Deposit items into bucket
     vm.startPrank(unauthorizedPlayer);
     vm.expectRevert(UnauthorizedWithdraw.selector);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.stopPrank();
 
     // Test authorized account, but unauthorized sender - Deposit items into bucket
@@ -198,7 +198,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
       )
     );
     vm.resumeGasMetering();
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.pauseGasMetering();
     vm.stopPrank();
 
@@ -208,7 +208,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     vm.stopPrank();
     // Authorized Deposit items into bucket
     vm.startPrank(player);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.stopPrank();
     // Verify the deposit was successful
     uint64 ephBalanceAfterWithdraw = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
@@ -270,7 +270,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     // Test unauthorized Deposit items into bucket
     vm.startPrank(unauthorizedPlayer);
     vm.expectRevert(UnauthorizedWithdraw.selector);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.stopPrank();
 
     // Test authorized account, but unauthorized sender - Deposit items into bucket
@@ -283,7 +283,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
       )
     );
     vm.resumeGasMetering();
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.pauseGasMetering();
     vm.stopPrank();
 
@@ -293,7 +293,82 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     vm.stopPrank();
     // Authorized Deposit items into bucket
     vm.startPrank(player);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, false, withdrawTransferItems);
+    world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
+    vm.stopPrank();
+    // Verify the deposit was successful
+    uint64 ephBalanceAfterWithdraw = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
+    uint64 metadataQtyAfterWithdraw = InventoryBalances.getQuantity(ssuId, itemId);
+    assertEq(
+      metadataQtyAfterWithdraw,
+      metadataQtyAfterDeposit - totalWithdrawAmount,
+      "Expected smart object's inventory balances to be smaller after withdraw by `totalWithdrawAmount` amount"
+    );
+    assertEq(
+      ephBalanceAfterWithdraw,
+      ephBalanceAfterDeposit + totalWithdrawAmount,
+      "Expected ephemeral inventory balance to be back to full after withdraw"
+    );
+    // // // expect bucket balance to be 0
+    BucketedInventoryItemData memory bucketBalance = BucketedInventoryItem.get(bucketId, itemId);
+    assertEq(uint64(bucketBalance.quantity), 0, "Expected bucket balance to be 0 after withdraw");
+    assertEq(
+      bucketBalance.exists,
+      false,
+      "Expected bucket balance to be cleared after zeroing out"
+    );
+    // transfer items from buckets to ephemeral to zero out inventory balances
+
+    // clear out inventorybalances
+    bool inventoryBalance = InventoryBalances.getExists(ssuId, itemId);
+    assertEq(
+      inventoryBalance,
+      false,
+      "Expected smart object's inventory balances to be deleted if it zeroes out"
+    );
+  }
+
+    function testWithdrawFullFromBucketToPlayer() public {
+    /** Withdraw */
+    vm.pauseGasMetering();
+    uint64 totalWithdrawAmount = uint64(afterDepositBucketBalance);
+    InventoryItemParams[] memory withdrawTransferItems = new InventoryItemParams[](1);
+    withdrawTransferItems[0] = InventoryItemParams({
+      smartObjectId: itemId,
+      quantity: uint64(totalWithdrawAmount)
+    });
+    uint256 startBucketBal = uint64(BucketedInventoryItem.getQuantity(bucketId, itemId));
+    assertEq(
+      startBucketBal,
+      afterDepositBucketBalance,
+      "Expected bucket balance to be the same as the total deposit amount before withdraw"
+    );
+    // Test unauthorized Deposit items into bucket
+    vm.startPrank(unauthorizedPlayer);
+    vm.expectRevert(UnauthorizedWithdraw.selector);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, player, withdrawTransferItems);
+    vm.stopPrank();
+
+    // Test authorized account, but unauthorized sender - Deposit items into bucket
+    vm.startPrank(player);
+    vm.expectRevert(
+      abi.encodeWithSelector(
+        AccessSystemLib.Access_NotDirectOwnerOrCanTransferToEphemeral.selector,
+        storeProxySystemAddress,
+        ssuId
+      )
+    );
+    vm.resumeGasMetering();
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, player, withdrawTransferItems);
+    vm.pauseGasMetering();
+    vm.stopPrank();
+
+    // Set authorization to system
+    vm.startPrank(admin);
+    ephemeralInteractSystem.setTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
+    vm.stopPrank();
+    // Authorized Deposit items into bucket
+    vm.startPrank(player);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, player, withdrawTransferItems);
     vm.stopPrank();
     // Verify the deposit was successful
     uint64 ephBalanceAfterWithdraw = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
