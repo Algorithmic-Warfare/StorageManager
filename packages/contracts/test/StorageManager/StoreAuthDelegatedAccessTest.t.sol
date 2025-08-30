@@ -64,7 +64,9 @@ contract StoreAuthDelegatedAccessTest is SetupTestWithBucketsTest {
     assertFalse(canTransfer, "Expected delegated canTransferBucket to return false");
   }
 
-  function testRegisterDelegatedAccessSystemAndAuthorize() public {
+  function testProxyTransferSystem() public {
+    
+
     
   }
 }

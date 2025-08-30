@@ -76,16 +76,28 @@ contract StorageSystem is System {
     }
   }
 
-  function withdraw(
+  /**
+   * @notice Withdraw items from a bucket to an ephemeral inventory.
+   * @param smartObjectId The id of the smart object to withdraw items from.
+   * @param bucketId The id of the bucket to withdraw items from.
+   * @param recipient The address of the recipient to receive the withdrawn items in their ephemeral inventory.
+   * @param transferItems The items to withdraw from the bucket, represented as an array of
+   *                      InventoryItemParams structs.
+   * @dev This function checks if the user is authorized to withdraw items from the bucket,
+   *      and if the items exist in the bucket. If they do exist,
+   *      it transfers them from the bucket to the ephemeral inventory for the specified user address.
+   *      If the item does not exist in the bucket, it reverts.
+   *      It also updates the total metadata for the item in the InventoryBalances table.
+   */
+  function transferToPlayer(
     uint256 smartObjectId,
     bytes32 bucketId,
-    bool useOwnerInventory,
+    address recipient,
     InventoryItemParams[] memory transferItems
   ) public {
     if (!storeAuthSystem.canWithdraw(smartObjectId, bucketId, _msgSender())) {
       revert UnauthorizedWithdraw();
     }
-    (, , address transferrer, ) = IWorldWithContext(_world()).getWorldCallContext(1);
 
     for (uint i = 0; i < transferItems.length; ) {
       InventoryItemParams memory item = transferItems[i];
@@ -99,9 +111,19 @@ contract StorageSystem is System {
       storeLogicSystem._processWithdraw(smartObjectId, bucketId, item);
       i = unsafe_increment(i);
     }
-    if (!useOwnerInventory) {
-      storeProxySystem.proxyTransferToEphemeral(smartObjectId, transferrer, transferItems);
+    if (recipient != OwnershipByObject.getAccount(smartObjectId)) {
+      storeProxySystem.proxyTransferToEphemeral(smartObjectId, recipient, transferItems);
     }
+  }
+
+  function withdraw(uint256 smartObjectId, bytes32 bucketId, InventoryItemParams[] memory transferItems) public {
+    (, , address msgInitiator, ) = IWorldWithContext(_world()).getWorldCallContext(1);
+    if (msgInitiator == OwnershipByObject.getAccount(smartObjectId)) {
+      // owner can always withdraw from their own bucket
+      transferToPlayer(smartObjectId, bucketId, msgInitiator, transferItems);
+      return;
+    }
+    transferToPlayer(smartObjectId, bucketId, msgInitiator, transferItems);
   }
 
   function internalTransfer(

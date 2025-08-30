@@ -152,10 +152,11 @@ contract StorageManagerPrimaryTest is SetupTestWithBucketsTest {
       afterDepositBucketBalance,
       "Expected bucket balance to be the same as the total deposit amount before withdraw"
     );
+    address ownerOfSSU = OwnershipByObject.getAccount(ssuId);
     // Test unauthorized Deposit items into bucket
     vm.startPrank(unauthorizedPlayer);
     vm.expectRevert(UnauthorizedWithdraw.selector);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, true, withdrawTransferItems);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, ownerOfSSU, withdrawTransferItems);
     vm.stopPrank();
 
     // Test authorized account, but unauthorized sender - Deposit items into bucket
@@ -179,7 +180,7 @@ contract StorageManagerPrimaryTest is SetupTestWithBucketsTest {
     // Authorized Deposit items into bucket
     uint64 primaryBalanceBeforeWithdraw = uint64(InventoryItem.getQuantity(ssuId, itemId));
     vm.startPrank(player);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, true, withdrawTransferItems);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, ownerOfSSU, withdrawTransferItems);
     vm.stopPrank();
     // Verify the deposit was successful
     uint64 primaryBalanceAfterWithdraw = uint64(InventoryItem.getQuantity(ssuId, itemId));
@@ -235,10 +236,12 @@ contract StorageManagerPrimaryTest is SetupTestWithBucketsTest {
       afterDepositBucketBalance,
       "Expected bucket balance to be the same as the total deposit amount before withdraw"
     );
+    address ownerOfSSU = OwnershipByObject.getAccount(ssuId);
+
     // Test unauthorized Deposit items into bucket
     vm.startPrank(unauthorizedPlayer);
     vm.expectRevert(UnauthorizedWithdraw.selector);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, true, withdrawTransferItems);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, ownerOfSSU, withdrawTransferItems);
     vm.stopPrank();
 
     // Test authorized account, but unauthorized sender - Deposit items into bucket
@@ -262,7 +265,7 @@ contract StorageManagerPrimaryTest is SetupTestWithBucketsTest {
     // Authorized Deposit items into bucket
     uint64 primaryBalanceBeforeWithdraw = uint64(InventoryItem.getQuantity(ssuId, itemId));
     vm.startPrank(player);
-    world.sm_v0_2_0__withdraw(ssuId, bucketId, true, withdrawTransferItems);
+    world.sm_v0_2_0__transferToPlayer(ssuId, bucketId, ownerOfSSU, withdrawTransferItems);
     vm.stopPrank();
     // Verify the deposit was successful
     uint64 primaryBalanceAfterWithdraw = uint64(InventoryItem.getQuantity(ssuId, itemId));
