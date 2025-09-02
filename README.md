@@ -1,12 +1,14 @@
-# Aggregate Allocation System
+# StorageManager
 
-A sophisticated storage management system for EVE Frontier that enables fine-grained inventory allocation within Smart Storage Units (SSUs). The system provides bucketed storage functionality, allowing multiple systems to safely share and manage inventory within the same storage unit without conflicts.
+A storage management framework for EVE Frontier that enables fine-grained inventory allocation within Smart Storage Units (SSUs). The system provides bucketed storage functionality, allowing multiple systems to safely share and manage inventory within the same storage unit without conflicts.
 
 ## What It Does
 
-The Aggregate Allocation System solves a critical problem in EVE Frontier's storage architecture: when multiple systems interact with the same Smart Storage Unit, their assets get aggregated together in primary inventory, making it impossible to track which assets belong to which system or user.
+This comes with the added benefit of lower gas fees when transferring items between buckets, since they don't need to route through the heavier world-chain-contracts inventory contracts stack (usage capacity, access control, inventory ownership checks, item entity record checks, etc) - since they're just internal allocation to the primary inventory (think of this like moving an item from one slot on a rack in a warehouse to a different slot).
 
 ### Core Functionality
+
+Read more about the design in [INTERACTION_PATTERNS.md](https://github.com/Algorithmic-Warfare/storage-manager/blob/main/INTERACTION_PATTERNS.md)
 
 - **Bucketed Storage**: Subdivides primary inventory into named "buckets" that can be allocated to different systems or purposes
 - **Inventory Allocation Tracking**: Maintains separate accounting of how primary inventory is allocated across different buckets
