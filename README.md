@@ -23,6 +23,7 @@ The core system that wraps EVE Frontier's native inventory functions with bucket
 - `deposit()` - Move items from ephemeral or primary inventory into buckets
 - `withdraw()` - Move items from buckets to ephemeral or primary inventory  
 - `internalTransfer()` - Move items between buckets (gas-efficient, no actual item movement)
+- `transferToPlayer()` - Move items from buckets to a player.
 
 #### BucketSystem
 Manages the creation and organization of storage buckets:
