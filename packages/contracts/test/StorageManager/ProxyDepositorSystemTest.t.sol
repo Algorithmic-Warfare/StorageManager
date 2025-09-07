@@ -61,7 +61,7 @@ contract ProxyDepositorSystemTest is SetupTestWithBucketsTest {
     uint64 ephBefore = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
     uint64 bucketBefore = uint64(BucketedInventoryItem.getQuantity(bucketId, itemId));
     uint64 primaryBefore = uint64(InventoryItem.getQuantity(ssuId, itemId));
-
+    uint64 custodyBefore = uint64(EphemeralInvItem.getQuantity(ssuId, storeProxySystemAddress, itemId));
     // Call the proxy system via the world to preserve player as _msgSender at the world layer,
     // but StorageSystem will receive this system as the caller, which is allowed by TestAccessSystem.
     vm.startPrank(player);
@@ -75,9 +75,10 @@ contract ProxyDepositorSystemTest is SetupTestWithBucketsTest {
     uint64 ephAfter = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
     uint64 bucketAfter = uint64(BucketedInventoryItem.getQuantity(bucketId, itemId));
     uint64 primaryAfter = uint64(InventoryItem.getQuantity(ssuId, itemId));
-
+    uint64 custodyAfter = uint64(EphemeralInvItem.getQuantity(ssuId, storeProxySystemAddress, itemId));
     assertEq(ephAfter, ephBefore - qty, "Ephemeral balance should decrease by qty");
     assertEq(bucketAfter, bucketBefore + qty, "Bucket balance should increase by qty");
-    assertEq(primaryAfter, primaryBefore + qty, "Primary inventory should increase by qty");
+    assertEq(primaryAfter, primaryBefore, "Primary inventory should stary the same");
+    assertEq(custodyAfter, custodyBefore + qty, "Custody balance should stay the same");
   }
 }

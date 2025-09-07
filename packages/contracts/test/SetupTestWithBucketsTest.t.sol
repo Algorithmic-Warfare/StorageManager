@@ -14,6 +14,8 @@ import { ResourceId } from "@latticexyz/store/src/ResourceId.sol";
 import { WorldResourceIdLib } from "@latticexyz/world/src/WorldResourceId.sol";
 import { RESOURCE_NAMESPACE, RESOURCE_SYSTEM } from "@latticexyz/world/src/worldResourceTypes.sol";
 
+import { SystemRegistry } from "@latticexyz/world/src/codegen/tables/SystemRegistry.sol";
+
 import { AccessSystemLib, accessSystem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/systems/AccessSystemLib.sol";
 import { InventoryItemParams } from "@eveworld/world-v2/src/namespaces/evefrontier/systems/inventory/types.sol";
 import { IBaseWorld } from "@eveworld/world-v2/src/codegen/world/IWorld.sol";
@@ -64,7 +66,7 @@ contract SetupTestWithBucketsTest is SetupTest {
 
   uint64 totalDepositAmount = uint64(0);
   // primary inventory balances after deposit
-  uint256 primaryQtyAfterDeposit;
+  uint256 custodyQtyAfterDeposit;
   // ephemera balances after deposit
   uint256 ephBalanceAfterDeposit;
   // inventory metadata qty after deposit
@@ -76,6 +78,8 @@ contract SetupTestWithBucketsTest is SetupTest {
   address unauthorizedPlayer = address(3);
   address nonInventoryOwnerPlayer = address(4);
   address nonTribePlayer = address(5);
+
+  address custodyAddress;
 
   uint256 itemId;
   uint256 itemTypeId;
@@ -90,7 +94,7 @@ contract SetupTestWithBucketsTest is SetupTest {
   uint256 SSU_TYPE_ID = 77917;
   uint256 FUEL_TYPE_ID = 78437;
 
-  //   address storageManagerSystem;
+    address storageManagerSystem;
   address storeProxySystemAddress;
 
   function setUp() public virtual override {
@@ -114,8 +118,11 @@ contract SetupTestWithBucketsTest is SetupTest {
     // unauthorizedPlayer = address(3); // another player for testing unauthorized access
     // itemId = vm.envUint("ITEM_ID");
     itemTypeId = vm.envUint("ITEM_TYPE_ID");
-    // storageManagerSystem = address(world.sm_v0_2_0__getSystemAddress());
+    storageManagerSystem = address(world.sm_v0_2_0__getSystemAddress());
     storeProxySystemAddress = address(world.sm_v0_2_0__getStoreProxyAddress());
+    custodyAddress = storeProxySystemAddress;
+    console.log("Store Proxy System Address:", storeProxySystemAddress);
+    console.log("Storage ManagerSystem:", storageManagerSystem);
     vm.startPrank(player, admin);
     safeCreateCharacter(admin, 1, 7777, "adminCharacter");
     safeCreateCharacter(player, 2, 7777, "playerCharacter");
@@ -222,17 +229,22 @@ contract SetupTestWithBucketsTest is SetupTest {
       "Expected ephemeral inventory balance to be 100 before deposit occurs"
     );
     uint64 initialMetadataQty = InventoryBalances.getQuantity(ssuId, itemId);
-    bytes32 roleId = keccak256(abi.encodePacked("TRANSFER_FROM_EPHEMERAL_ROLE", ssuId));
+    uint64 initialCustodyQty = uint64(EphemeralInvItem.getQuantity(ssuId, custodyAddress, itemId));
+    // bytes32 roleId = keccak256(abi.encodePacked("TRANSFER_FROM_EPHEMERAL_ROLE", ssuId));
+    bytes32 crossTransferRoleId = keccak256(abi.encodePacked("CROSS_TRANSFER_TO_EPHEMERAL_ROLE", ssuId));
     bytes32[] memory rolesToCheck = new bytes32[](1);
-    rolesToCheck[0] = roleId;
-    bool[] memory hasRoles = accessUtilsSystem.hasRoles(rolesToCheck, storeProxySystemAddress);
-    assertEq(hasRoles[0], false, "Expected store proxy to not have TRANSFER_FROM_EPHEMERAL_ROLE initially");
+    rolesToCheck[0] = crossTransferRoleId;
+    bool[] memory hasRoles = accessUtilsSystem.hasRoles(rolesToCheck, custodyAddress);
+    ResourceId fetchedId = SystemRegistry.getSystemId(address((0xC67d894b6836d415a16a6ff6F30e3fc280F1b995)));
+    console.log("Fetched System ID for Ephemeral Interact System:");
+    console.logBytes16(bytes16(ResourceId.unwrap(fetchedId)));
+    assertEq(hasRoles[0], false, "Expected store proxy to not have CROSS_TRANSFER_TO_EPHEMERAL_ROLE initially");
     // Set authorization to system
     vm.startPrank(admin);
-    ephemeralInteractSystem.setTransferFromEphemeralAccess(ssuId, storeProxySystemAddress, true);
+    ephemeralInteractSystem.setCrossTransferToEphemeralAccess(ssuId, custodyAddress, true);
     vm.stopPrank();
-    bool[] memory hasRolesAfter = accessUtilsSystem.hasRoles(rolesToCheck, storeProxySystemAddress);
-    assertEq(hasRolesAfter[0], true, "Expected store proxy to have TRANSFER_FROM_EPHEMERAL_ROLE after it was set");
+    bool[] memory hasRolesAfter = accessUtilsSystem.hasRoles(rolesToCheck, custodyAddress);
+    assertEq(hasRolesAfter[0], true, "Expected store proxy to have CROSS_TRANSFER_TO_EPHEMERAL_ROLE after it was set");
     // Authorized Deposit items into bucket
     vm.startPrank(player);
     uint64 ephBalanceBeforeTwo = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
@@ -245,13 +257,24 @@ contract SetupTestWithBucketsTest is SetupTest {
     metadataQtyAfterDeposit = InventoryBalances.getQuantity(ssuId, itemId);
     ephBalanceAfterDeposit = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
     afterDepositBucketBalance = BucketedInventoryItem.getQuantity(bucketId, itemId);
-    primaryQtyAfterDeposit = InventoryItem.getQuantity(ssuId, itemId);
+    custodyQtyAfterDeposit = EphemeralInvItem.getQuantity(ssuId, custodyAddress, itemId);
     console.log("Ephemeral balance before deposit:", ephBalanceBeforeTwo);
     console.log("Ephemeral balance after deposit:", ephBalanceAfterDeposit);
     assertEq(
       ephBalanceAfterDeposit,
       ephBalanceBefore - totalDepositAmount,
       "Expected ephemeral inventory balance to be fewer after deposit"
+    );
+
+    assertEq(
+      custodyQtyAfterDeposit,
+      initialCustodyQty + totalDepositAmount,
+      "Expected custodian inventory quantity to be greater after deposit"
+    );
+    assertEq(
+      metadataQtyAfterDeposit,
+      initialMetadataQty + totalDepositAmount,
+      "Expected inventory metadata quantity to be greater after deposit"
     );
     vm.resumeGasMetering();
   }

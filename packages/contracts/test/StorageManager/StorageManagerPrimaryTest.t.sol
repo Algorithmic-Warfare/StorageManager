@@ -97,7 +97,7 @@ contract StorageManagerPrimaryTest is SetupTestWithBucketsTest {
     uint256 startInventoryBal = uint64(InventoryItem.getQuantity(ssuId, itemId));
     assertEq(
       startInventoryBal,
-      primaryQtyAfterDeposit,
+      custodyQtyAfterDeposit,
       "Expected smart object's inventory balances to be the same as the total transfer amount before deposit"
     );
     // Test unauthorized Deposit items into bucket (unauthorized depositor)

@@ -30,7 +30,7 @@ import "@systems/StorageSystem/Errors.sol";
 import { BucketMetadata } from "../../src/codegen/tables/BucketMetadata.sol";
 import { Bytes32StringPacker } from "../../src/systems/StringPacker/StringPackerBytes.sol";
 
-contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTest {
+contract StorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTest {
   using Bytes32StringPacker for string;
   using Bytes32StringPacker for bytes32;
 
@@ -192,8 +192,8 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     vm.startPrank(player);
     vm.expectRevert(
       abi.encodeWithSelector(
-        AccessSystemLib.Access_NotDirectOwnerOrCanTransferToEphemeral.selector,
-        storeProxySystemAddress,
+        AccessSystemLib.Access_NotEphemeralOwnerOrCallAccessWithEphemeralOwner.selector,
+        storeProxySystem.getAddress(),
         ssuId
       )
     );
@@ -204,19 +204,21 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
 
     // Set authorization to system
     vm.startPrank(admin);
+    ephemeralInteractSystem.setCrossTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
+    ephemeralInteractSystem.setTransferFromEphemeralAccess(ssuId, storeProxySystemAddress, true);
     ephemeralInteractSystem.setTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
     vm.stopPrank();
-    // Authorized Deposit items into bucket
+    // Authorized withdraw items from bucket
     vm.startPrank(player);
     world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.stopPrank();
     // Verify the deposit was successful
     uint64 ephBalanceAfterWithdraw = uint64(EphemeralInvItem.getQuantity(ssuId, player, itemId));
-    uint64 metadataQtyAfterWithdraw = InventoryBalances.getQuantity(ssuId, itemId);
+    uint64 custodyBalanceAfterWithdraw = uint64(EphemeralInvItem.getQuantity(ssuId, custodyAddress, itemId));
     assertEq(
-      metadataQtyAfterWithdraw,
-      metadataQtyAfterDeposit - totalWithdrawAmount,
-      "Expected smart object's inventory balances to be smaller after withdraw by `totalWithdrawAmount` amount"
+      custodyBalanceAfterWithdraw,
+      custodyQtyAfterDeposit - totalWithdrawAmount,
+      "Expected smart object's custody address balances to be smaller after withdraw by `totalWithdrawAmount` amount"
     );
     assertEq(
       ephBalanceAfterWithdraw,
@@ -277,8 +279,8 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     vm.startPrank(player);
     vm.expectRevert(
       abi.encodeWithSelector(
-        AccessSystemLib.Access_NotDirectOwnerOrCanTransferToEphemeral.selector,
-        storeProxySystemAddress,
+        AccessSystemLib.Access_NotEphemeralOwnerOrCallAccessWithEphemeralOwner.selector,
+        custodyAddress,
         ssuId
       )
     );
@@ -289,9 +291,9 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
 
     // Set authorization to system
     vm.startPrank(admin);
-    ephemeralInteractSystem.setTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
+    ephemeralInteractSystem.setCrossTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
     vm.stopPrank();
-    // Authorized Deposit items into bucket
+    // Authorized Withdraw items from bucket
     vm.startPrank(player);
     world.sm_v0_2_0__withdraw(ssuId, bucketId, withdrawTransferItems);
     vm.stopPrank();
@@ -352,8 +354,8 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
     vm.startPrank(player);
     vm.expectRevert(
       abi.encodeWithSelector(
-        AccessSystemLib.Access_NotDirectOwnerOrCanTransferToEphemeral.selector,
-        storeProxySystemAddress,
+        AccessSystemLib.Access_NotEphemeralOwnerOrCallAccessWithEphemeralOwner.selector,
+        custodyAddress,
         ssuId
       )
     );
@@ -364,7 +366,7 @@ contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTe
 
     // Set authorization to system
     vm.startPrank(admin);
-    ephemeralInteractSystem.setTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
+    ephemeralInteractSystem.setCrossTransferToEphemeralAccess(ssuId, storeProxySystemAddress, true);
     vm.stopPrank();
     // Authorized Deposit items into bucket
     vm.startPrank(player);

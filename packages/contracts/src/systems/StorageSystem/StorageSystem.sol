@@ -29,6 +29,7 @@ contract StorageSystem is System {
    * @notice Deposit items into a bucket.
    * @param smartObjectId The id of the smart object to deposit items into.
    * @param bucketId The id of the bucket to deposit items into.
+   * @param useOwnerInventory If true, the items will be deposited from the owner's primary inventory.
    * @param transferItems The items to deposit into the bucket, represented as an array of
    *                      InventoryItemParams structs.
    * @dev This function checks if the user is authorized to deposit items into the bucket,
@@ -72,7 +73,25 @@ contract StorageSystem is System {
     }
     // transfer the items from the ephemeral inventory to the primary inventory
     if (!useOwnerInventory) {
-      storeProxySystem.proxyTransferFromEphemeral(smartObjectId, transferrer, transferItems);
+      // proxyCrossTransferToEphemeral expects _msgSender(1) to be the owner of the ephemeral inventory
+      // so we need to use the transferrer from the world call context
+      // if depositing from ephemeral inventory, transfer the items from the ephemeral inventory to the StoreProxy
+      // (bool success,) = storeProxySystem.getAddress().delegatecall(
+      //   abi.encodeWithSignature(
+      //     "proxyTransferFromEphemeral(uint256,address,address,tuple[])",
+      //     smartObjectId,
+      //     transferrer,
+      //     storeProxySystem.getStoreProxyAddress(),
+      //     transferItems
+      //   )
+      // );
+      // if (!success) {
+      //   revert UnauthorizedDeposit();
+      // }
+      storeProxySystem.proxyCrossTransferToEphemeral(smartObjectId, transferrer, storeProxySystem.getStoreProxyAddress(), transferItems);
+    } else {
+      // if depositing from owner inventory, transfer the items from the owner's primary inventory to the StoreProxySystem
+      storeProxySystem.proxyTransferToEphemeral(smartObjectId, storeProxySystem.getStoreProxyAddress(), transferItems);
     }
   }
 
@@ -112,7 +131,20 @@ contract StorageSystem is System {
       i = unsafe_increment(i);
     }
     if (recipient != OwnershipByObject.getAccount(smartObjectId)) {
-      storeProxySystem.proxyTransferToEphemeral(smartObjectId, recipient, transferItems);
+      // if the recipient is not the owner of the smart object, transfer the items to their ephemeral inventory
+      storeProxySystem.proxyCrossTransferToEphemeral(
+        smartObjectId,
+        storeProxySystem.getStoreProxyAddress(),
+        recipient,
+        transferItems
+      );
+    } else {
+      // if the recipient is the owner of the smart object, transfer the items directly to their primary inventory
+      storeProxySystem.proxyTransferFromEphemeral(
+        smartObjectId,
+        storeProxySystem.getStoreProxyAddress(),
+        transferItems
+      );
     }
   }
 

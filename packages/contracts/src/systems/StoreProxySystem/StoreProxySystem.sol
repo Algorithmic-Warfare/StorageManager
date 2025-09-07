@@ -1,5 +1,6 @@
 pragma solidity >=0.8.24;
 
+import { SmartObjectFramework } from "@eveworld/smart-object-framework-v2/src/inherit/SmartObjectFramework.sol";
 import { System } from "@latticexyz/world/src/System.sol";
 import { ResourceId } from "@latticexyz/store/src/ResourceId.sol";
 import { ResourceIds } from "@latticexyz/store/src/codegen/tables/ResourceIds.sol";
@@ -12,12 +13,9 @@ import { ephemeralInteractSystem } from "@eveworld/world-v2/src/namespaces/evefr
 import { inventoryInteractSystem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/systems/InventoryInteractSystemLib.sol";
 import { deployableSystem } from "@eveworld/world-v2/src/namespaces/evefrontier/codegen/systems/DeployableSystemLib.sol";
 
-contract StoreProxySystem is System {
-    ResourceId public immutable storageSystemId = WorldResourceIdLib.encode({
-      typeId: RESOURCE_SYSTEM,
-      namespace: "sm_v0_2_0",
-      name: "StorageSystem"
-    });
+contract StoreProxySystem is SmartObjectFramework {
+  ResourceId public immutable storageSystemId =
+    WorldResourceIdLib.encode({ typeId: RESOURCE_SYSTEM, namespace: "sm_v0_2_0", name: "StorageSystem" });
   // This contract is a static proxy that forwards calls to the ephemeralInteractSystem.
   // It is used to allow the StorageSystem to be upgradeable without breaking roles.
   modifier onlyStorageSystem() {
@@ -25,10 +23,7 @@ contract StoreProxySystem is System {
     // It is used to allow the StorageSystem to be upgradeable without breaking roles.
 
     if (ResourceIds.getExists(storageSystemId)) {
-      require(
-        _msgSender() == Systems.getSystem(storageSystemId),
-        "Only StorageSystem can call this function"
-      );
+      require(_msgSender() == Systems.getSystem(storageSystemId), "Only StorageSystem can call this function");
     } else {
       // If the StorageSystem is not registered, we allow any caller.
       // This is useful for testing and development purposes.
@@ -68,10 +63,15 @@ contract StoreProxySystem is System {
     address fromEphemeralOwner,
     address toEphemeralOwner,
     InventoryItemParams[] memory items
-  ) public onlyStorageSystem {
+  ) public context onlyStorageSystem {
     // This function is used to transfer items from one ephemeral object to another.
     // It is used to allow for items to be transferred from one ephemeral object to another.
-    return ephemeralInteractSystem.crossTransferToEphemeral(smartObjectId, fromEphemeralOwner, toEphemeralOwner, items);
+    // return ephemeralInteractSystem.crossTransferToEphemeral(smartObjectId, fromEphemeralOwner, toEphemeralOwner, items);
+    // withdraw the items from the designated inventory
+    // proxyTransferFromEphemeral(smartObjectId, fromEphemeralOwner, items);
+    // deposit the items to the designated ephemeral inventory
+    // proxyTransferToEphemeral(smartObjectId, toEphemeralOwner, items);
+    ephemeralInteractSystem.crossTransferToEphemeral(smartObjectId, fromEphemeralOwner, toEphemeralOwner, items);
   }
 
   function proxyTransferToInventory(

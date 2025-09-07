@@ -53,7 +53,7 @@ import "@systems/StorageSystem/Errors.sol";
 import { BucketMetadata } from "../../src/codegen/tables/BucketMetadata.sol";
 import { Bytes32StringPacker } from "../../src/systems/StringPacker/StringPackerBytes.sol";
 
-contract StoragStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTest {
+contract SStorageManagerEphemeralTesteManagerTest is SetupTestWithBucketsTest {
   using Bytes32StringPacker for string;
   using Bytes32StringPacker for bytes32;
 
