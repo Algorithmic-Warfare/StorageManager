@@ -65,13 +65,15 @@ Additional access control utilities:
 - Integration with EVE Frontier's role-based access system
 
 ### Constraints
-but it suffers from a problem in that the owner always has access to the items managed by the third party System. This can inadvertently break the accounting of any services built on top of the SSU that requires management of items - like tribe warehousing, item marketplaces, etc - since the owner can just "take" the item away from the system without it's code updating the accounting.
+The StorageManager suffers from a problem in that the owner always has access to the items managed by the third party System. This can inadvertently break the accounting of any services built on top of the SSU that requires management of items - like tribe warehousing, item marketplaces, etc - since the owner can just "take" the item away from the system without it's code updating the accounting.
 
 If:
 - We could transfer the ownership of the SSU (to the System or to a burn address like 0x0000...0000). Or,
 - The owner of the SSU functioned exactly the same as non-owner players (where their owner's default inventory is the ephemeral inventory). Or,
 - There was a specific inventory space intended to be "owned" by 3rd party MUD systems.
 Then this problem would be alleviated.
+
+For now - you can get around this issue by deploying your SSU by structures on a different character than you play on the most.
 
 ## Technology Stack
 
