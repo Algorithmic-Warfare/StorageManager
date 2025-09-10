@@ -65,9 +65,9 @@ Additional access control utilities:
 - Integration with EVE Frontier's role-based access system
 
 ### Constraints
-The StorageManager suffers from a problem in that the owner always has access to the items managed by the third party System. This can inadvertently break the accounting of any services built on top of the SSU that requires management of items - like tribe warehousing, item marketplaces, etc - since the owner can just "take" the item away from the system without it's code updating the accounting.
+The StorageManager suffers from a problem in that the owner always has access to the items managed by the third party System. This is due to a constraint of the Eve Frontier contracts on which this service is [integrated](https://github.com/projectawakening/world-chain-contracts/issues/698). Basically - having the owner of the SSU use the system can inadvertently break the accounting of any services built on top of the SSU that requires management of items - like tribe warehousing, item marketplaces, etc - since the owner can just "take" the item away from the system without it's code updating the accounting. To avoid this problem - when you want to withdraw objects from the SSU as the owner of the SSU - make sure you at-most withdraw the amount of an item that is listed in the "owners inventory" section of the [dapp](https://metalyth.org/inventory) since that interface accounts for this issue. Alternatively - you can deploy the SSU from an account that isn't going to be depositing to/withdrawing from the SSU.
 
-If:
+For the Eve Frontier team to address this constraint:
 - We could transfer the ownership of the SSU (to the System or to a burn address like 0x0000...0000). Or,
 - The owner of the SSU functioned exactly the same as non-owner players (where their owner's default inventory is the ephemeral inventory). Or,
 - There was a specific inventory space intended to be "owned" by 3rd party MUD systems.
