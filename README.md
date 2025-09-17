@@ -65,6 +65,8 @@ Additional access control utilities:
 - Integration with EVE Frontier's role-based access system
 
 ### Constraints
+(_this issue has been surfaced to CCP in [an issue here](https://github.com/projectawakening/world-chain-contracts/issues/698)_)
+
 The StorageManager suffers from a problem in that the owner always has access to the items managed by the third party System. This is due to a constraint of the Eve Frontier contracts on which this service is [integrated](https://github.com/projectawakening/world-chain-contracts/issues/698). Basically - having the owner of the SSU use the system can inadvertently break the accounting of any services built on top of the SSU that requires management of items - like tribe warehousing, item marketplaces, etc - since the owner can just "take" the item away from the system without it's code updating the accounting. To avoid this problem - when you want to withdraw objects from the SSU as the owner of the SSU - make sure you at-most withdraw the amount of an item that is listed in the "owners inventory" section of the [dapp](https://metalyth.org/inventory) since that interface accounts for this issue. Alternatively - you can deploy the SSU from an account that isn't going to be depositing to/withdrawing from the SSU.
 
 For the Eve Frontier team to address this constraint:
